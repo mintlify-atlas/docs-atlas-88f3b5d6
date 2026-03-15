@@ -1,0 +1,72 @@
+---
+title: 'GET /predict/'
+description: 'Predict a medical condition from a comma-separated list of symptoms.'
+---
+
+Accepts a string of comma-separated symptoms and returns the condition label predicted by the HealthIA diagnostic model.
+
+## Request
+
+**Method:** `GET`  
+**Path:** `/predict/`
+
+### Query parameters
+
+<ParamField query="sintomas" type="string" required>
+  A comma-separated list of symptoms to evaluate. For example: `febre,cansaço,dor no corpo`.
+
+  Provide between 2 and 8 symptoms for reliable results. Fewer than 2 symptoms may not provide enough signal; more than 8 are ignored by the recommended frontend constraints.
+</ParamField>
+
+## Response
+
+<ResponseField name="sintomas" type="string[]">
+  The list of symptoms as parsed by splitting the `sintomas` query parameter on commas.
+</ResponseField>
+
+<ResponseField name="diagnostico_previsto" type="string[]">
+  An array containing the predicted condition label. The label is a Portuguese underscore-separated string matching one of the entries in the [supported conditions](/conditions/overview) reference.
+</ResponseField>
+
+## Example
+
+### Request
+
+```bash
+curl "http://127.0.0.1:8000/predict/?sintomas=febre,cans%C3%A7o,dor%20no%20corpo"
+```
+
+### Response
+
+```json
+{
+  "sintomas": ["febre", "cansaço", "dor no corpo"],
+  "diagnostico_previsto": ["doenca_lyme"]
+}
+```
+
+## TypeScript usage
+
+The frontend API client exposes `predictSymptoms`, which handles URL encoding and response typing automatically:
+
+```typescript
+import { api } from '@/services/api';
+
+const result = await api.predictSymptoms(['febre', 'cansaço', 'dor no corpo']);
+
+console.log(result.sintomas);             // ['febre', 'cansaço', 'dor no corpo']
+console.log(result.diagnostico_previsto); // ['doenca_lyme']
+```
+
+The `PredictResponse` type is defined in `frontend/src/types/api.ts`:
+
+```typescript
+export interface PredictResponse {
+  sintomas: string[];
+  diagnostico_previsto: string[];
+}
+```
+
+<Note>
+  To map the returned condition label to a human-readable name, consult the [supported conditions](/conditions/overview) reference table.
+</Note>

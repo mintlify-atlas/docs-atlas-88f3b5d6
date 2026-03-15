@@ -1,0 +1,165 @@
+---
+title: 'Frontend architecture'
+description: 'React 18 + TypeScript SPA structure, component hierarchy, state management, and API integration for HealthIA.'
+---
+
+The HealthIA frontend is a single-page application built with React 18, TypeScript, Vite, and Tailwind CSS. All user interaction happens on a single route rendered by `HomePage.tsx`.
+
+## Technology stack
+
+<Columns cols={2}>
+  <Card title="React 18 + TypeScript" icon="react">
+    Component tree with strict TypeScript interfaces for all API responses and internal state shapes.
+  </Card>
+  <Card title="Vite" icon="bolt">
+    Development server on `localhost:5173` with HMR. The `VITE_API_BASE_URL` env var is inlined at build time.
+  </Card>
+  <Card title="Tailwind CSS" icon="palette">
+    Utility-first styling. Dark and light mode are toggled via the `useTheme` custom hook.
+  </Card>
+  <Card title="Fetch API" icon="globe">
+    A thin `api.ts` wrapper around `fetch` — no external HTTP library required.
+  </Card>
+</Columns>
+
+## Project structure
+
+<Tree>
+  <Tree.Folder name="frontend/src" defaultOpen>
+    <Tree.File name="pages/HomePage.tsx" />
+    <Tree.Folder name="components" defaultOpen>
+      <Tree.File name="Header.tsx" />
+      <Tree.File name="SymptomInput.tsx" />
+      <Tree.File name="PredictionResult.tsx" />
+      <Tree.File name="HistoryPanel.tsx" />
+      <Tree.File name="MedicalDisclaimer.tsx" />
+      <Tree.File name="ApiStatusBadge.tsx" />
+    </Tree.Folder>
+    <Tree.Folder name="services">
+      <Tree.File name="api.ts" />
+    </Tree.Folder>
+    <Tree.Folder name="hooks">
+      <Tree.File name="useDiagnosisHistory.ts" />
+      <Tree.File name="useTheme.ts" />
+    </Tree.Folder>
+    <Tree.Folder name="types">
+      <Tree.File name="index.ts" />
+    </Tree.Folder>
+    <Tree.Folder name="constants">
+      <Tree.File name="symptoms.ts" />
+    </Tree.Folder>
+  </Tree.Folder>
+</Tree>
+
+## Component hierarchy
+
+`HomePage.tsx` is the root component. It composes all other components and owns the top-level state.
+
+```
+HomePage
+├── Header
+│   └── ApiStatusBadge
+├── SymptomInput
+├── MedicalDisclaimer
+├── PredictionResult
+└── HistoryPanel
+```
+
+### Component responsibilities
+
+| Component | Responsibility |
+| --- | --- |
+| `Header` | Title bar. Hosts `ApiStatusBadge` and the theme toggle button. |
+| `ApiStatusBadge` | Polls `GET /` on mount and shows `online`, `offline`, or `checking` status. |
+| `SymptomInput` | Tag-based input with autocomplete drawn from `COMMON_SYMPTOMS`. Enforces `MIN_SYMPTOMS` and `MAX_SYMPTOMS`. |
+| `MedicalDisclaimer` | Static legal disclaimer rendered inside the input form. |
+| `PredictionResult` | Displays the predicted diagnosis, the submitted symptom list, a timestamp, and an export button. |
+| `HistoryPanel` | Renders past consultations from `useDiagnosisHistory`. Supports repeating a previous query and clearing history. |
+
+## State management
+
+The application uses local React state (`useState` / `useEffect`) and two custom hooks. There is no global state library.
+
+### `useDiagnosisHistory`
+
+Manages an ordered list of past diagnosis results. Provides:
+
+- `history` — array of `DiagnosisHistoryItem` objects.
+- `addToHistory(item)` — appends a new result.
+- `clearHistory()` — empties the list.
+- `repeatDiagnosis(item)` — re-submits a previous symptom set.
+
+History is persisted so results survive a page refresh.
+
+### `useTheme`
+
+Toggles between `light` and `dark` mode by adding or removing a class on the document root. The preference is persisted to `localStorage`.
+
+## API integration
+
+`services/api.ts` exposes a typed `api` object built on top of a `fetch` wrapper.
+
+```typescript
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
+).replace(/\/$/, '');
+
+export const api = {
+  baseUrl: API_BASE_URL,
+  getWelcome: () => request<WelcomeResponse>('/'),
+  predictSymptoms: (symptoms: string[]) => {
+    const sintomas = symptoms.join(',');
+    return request<PredictResponse>(
+      `/predict/?sintomas=${encodeURIComponent(sintomas)}`
+    );
+  },
+};
+```
+
+Set `VITE_API_BASE_URL` in a `.env` file to point the frontend at a non-default backend:
+
+```bash
+# .env
+VITE_API_BASE_URL=https://healthia-api.up.railway.app
+```
+
+## TypeScript interfaces
+
+```typescript
+export interface WelcomeResponse {
+  Message: string;
+}
+
+export interface PredictResponse {
+  sintomas: string[];
+  diagnostico_previsto: string[];
+}
+```
+
+`DiagnosisHistoryItem` extends `PredictResponse` with a client-side timestamp used by `HistoryPanel` and `PredictionResult`.
+
+## Input constraints
+
+Symptom selection limits are defined as named constants in `constants/symptoms.ts` and enforced inside `SymptomInput`.
+
+```typescript
+export const MIN_SYMPTOMS = 2;
+export const MAX_SYMPTOMS = 8;
+```
+
+<Note>
+The submit button is disabled until at least `MIN_SYMPTOMS` tags are present and is hidden (or re-disabled) once the user reaches `MAX_SYMPTOMS`.
+</Note>
+
+## Dark/light mode
+
+The `useTheme` hook reads the user's OS preference on first load via `window.matchMedia('(prefers-color-scheme: dark)')`, then lets the user override it with the toggle in `Header`. The chosen value is written to `localStorage` under the key `theme`.
+
+## Diagnosis history and export
+
+Each successful API response is passed to `useDiagnosisHistory.addToHistory()`. The `HistoryPanel` renders the full list with two actions per entry:
+
+- **Repeat** — calls `repeatDiagnosis(item)`, which re-populates `SymptomInput` with the original symptom set and submits the request.
+- **Clear** — calls `clearHistory()` to remove all entries.
+
+`PredictionResult` includes an **Export** button. It calls a `buildExportText` utility that formats the diagnosis and symptom list as plain text and triggers a browser download.

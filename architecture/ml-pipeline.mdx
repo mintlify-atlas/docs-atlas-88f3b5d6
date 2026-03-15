@@ -1,0 +1,183 @@
+---
+title: 'ML pipeline'
+description: 'How HealthIA trains, persists, and runs the XGBoost symptom-to-diagnosis classifier.'
+---
+
+The ML pipeline converts free-text symptom descriptions into a predicted medical condition. It is implemented across four service modules in `HEALTHIA/services/`.
+
+## Data source
+
+Training data is defined entirely in memory inside `datasetService.py`. It contains approximately 200 labelled samples covering 18 distinct medical conditions. Each sample is a dictionary with two fields:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sintomas` | `str` | Space-separated symptom keywords |
+| `diagnostico` | `str` | The target condition label |
+
+<Note>
+Because the dataset is in-memory, no external database or file is required to retrain the model. Run `leitura.py` to regenerate and persist all three artifacts.
+</Note>
+
+## Pipeline stages
+
+<Steps>
+  <Step title="Load the dataset">
+    `datasetService.dataset_completo()` returns a pandas DataFrame with `sintomas` and `diagnostico` columns.
+  </Step>
+  <Step title="TF-IDF vectorization">
+    `vetorizacaoService.vetorizacao()` fits a `TfidfVectorizer` on the full `sintomas` column and transforms it into a sparse feature matrix `X`.
+
+    ```python
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    def vetorizacao():
+        tfidf = TfidfVectorizer()
+        df = dataset_completo()
+        X = df["sintomas"].astype(str)
+        tfidf.fit(X)
+        X_tfidf = tfidf.transform(X)
+        return X_tfidf
+    ```
+
+    The vectorizer uses scikit-learn defaults: no stopword list, whitespace tokenizer, unigrams only.
+  </Step>
+  <Step title="Label encoding">
+    `vetorizacaoService.encode_Y()` fits a `LabelEncoder` on the `diagnostico` column and returns integer class indices.
+
+    ```python
+    from sklearn.preprocessing import LabelEncoder
+
+    def encode_Y():
+        label_encoder = LabelEncoder()
+        df = dataset_completo()
+        Y = df["diagnostico"].astype(str)
+        Y_encoded = label_encoder.fit_transform(Y)
+        return Y_encoded
+    ```
+  </Step>
+  <Step title="Train/test split">
+    `treinamentoService.separar_dados()` splits the data with a 70/30 ratio.
+
+    ```python
+    from sklearn.model_selection import train_test_split
+
+    def separar_dados():
+        X, Y = buscar_dados()
+        X_treino, X_teste, Y_treino, Y_teste = train_test_split(
+            X, Y, test_size=0.3, random_state=42
+        )
+        return X_treino, X_teste, Y_treino, Y_teste
+    ```
+
+    | Parameter | Value |
+    | --- | --- |
+    | Test set size | 30 % |
+    | Training set size | 70 % |
+    | `random_state` | 42 |
+  </Step>
+  <Step title="Train XGBoost">
+    `treinamentoService.treinar_modelo()` fits an `XGBClassifier` on the training split.
+
+    ```python
+    from xgboost import XGBClassifier as XGBoost
+
+    def treinar_modelo():
+        X_treino = separar_dados()[0]
+        Y_treino = separar_dados()[2]
+        HealthIA = XGBoost(
+            n_estimators=150,
+            learning_rate=0.03,
+            max_depth=3,
+            min_child_weight=1,
+            random_state=42,
+        )
+        HealthIA.fit(X_treino, Y_treino)
+        return HealthIA
+    ```
+
+    | Hyperparameter | Value | Notes |
+    | --- | --- | --- |
+    | `n_estimators` | 150 | Number of boosting rounds |
+    | `learning_rate` | 0.03 | Step size shrinkage |
+    | `max_depth` | 3 | Max tree depth per estimator |
+    | `min_child_weight` | 1 | Minimum sum of instance weight in a child |
+    | `random_state` | 42 | Reproducibility seed |
+  </Step>
+  <Step title="Persist model artifacts">
+    `salvarmodelService.py` writes three files to the `model/` directory.
+
+    ```python
+    # Save the XGBoost model
+    HealthIA.save_model('model/modelo_HealthIA.json')
+
+    # Save the TF-IDF vectorizer
+    with open('model/vetorizador_HealthIA.pkl', 'wb') as f:
+        pickle.dump(vetorizador_criado, f)
+
+    # Save the label encoder
+    with open('model/encoderY_HealthIA.pkl', 'wb') as f:
+        pickle.dump(encoderY_criado, f)
+    ```
+  </Step>
+</Steps>
+
+## Model artifacts
+
+| File | Format | Contents |
+| --- | --- | --- |
+| `modelo_HealthIA.json` | XGBoost JSON | Trained `XGBClassifier` |
+| `vetorizador_HealthIA.pkl` | pickle | Fitted `TfidfVectorizer` |
+| `encoderY_HealthIA.pkl` | pickle | Fitted `LabelEncoder` with `classes_` attribute |
+
+## Inference path
+
+At runtime the `DiagnosticoIA` class in `executarService.py` loads all three artifacts once on initialisation and reuses them for every prediction.
+
+```python
+class DiagnosticoIA:
+    def __init__(self, caminhoModelo: str):
+        self.HealthIA = xgb.XGBClassifier()
+        self.HealthIA.load_model(
+            os.path.join(caminhoModelo, 'modelo_HealthIA.json')
+        )
+        self.vetorizadortfidf = joblib.load(
+            os.path.join(caminhoModelo, 'vetorizador_HealthIA.pkl')
+        )
+        self.encoderYPronto = joblib.load(
+            os.path.join(caminhoModelo, 'encoderY_HealthIA.pkl')
+        )
+
+    def predict_simples(self, sintomas):
+        if isinstance(sintomas, list):
+            sintomas_string = " ".join(sintomas)
+        else:
+            sintomas_string = sintomas
+        sintomas_vetorizados = self.vetorizadortfidf.transform([sintomas_string])
+        predicao = self.HealthIA.predict(sintomas_vetorizados)
+        pred_nome = (
+            self.encoderYPronto.classes_[int(predicao[0])]
+            if hasattr(self.encoderYPronto, 'classes_')
+            else str(predicao[0])
+        )
+        return pred_nome
+```
+
+The inference steps in order:
+
+1. Join the symptom list into a single whitespace-delimited string.
+2. Transform the string with the pre-fitted `TfidfVectorizer` to produce a sparse vector.
+3. Call `XGBClassifier.predict()` to obtain the integer class index.
+4. Decode the index using `LabelEncoder.classes_` to recover the condition label.
+
+## Retraining
+
+Run `leitura.py` from the `HEALTHIA/` directory to retrain the model and overwrite the artifacts:
+
+```bash
+cd HEALTHIA
+python leitura.py
+```
+
+<Tip>
+Because the dataset is in-memory, adding new conditions means editing `datasetService.py` and running `leitura.py` again.
+</Tip>

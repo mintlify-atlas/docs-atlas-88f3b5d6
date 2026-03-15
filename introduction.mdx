@@ -1,0 +1,82 @@
+---
+title: Introduction
+description: AI-powered medical diagnostic assistant that predicts likely diagnoses from patient-reported symptoms.
+---
+
+# HealthIA
+
+HealthIA is an intelligent diagnostic assistant that uses machine learning to suggest possible medical conditions based on symptoms you describe in plain language. You type your symptoms, HealthIA's XGBoost model analyses them, and you receive a predicted diagnosis — all in seconds.
+
+<Warning>
+  HealthIA is a decision-support tool for educational and informational purposes only. It is **not** a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider.
+</Warning>
+
+## How it works
+
+<Steps>
+  <Step title="Enter your symptoms">
+    Type between 2 and 8 symptoms in plain language — for example: *febre, cansaço, dor no corpo* (fever, fatigue, body pain).
+  </Step>
+  <Step title="Submit for analysis">
+    HealthIA sends your symptom list to the FastAPI backend, which vectorises the text with TF-IDF and runs it through the trained XGBoost classifier.
+  </Step>
+  <Step title="Receive a prediction">
+    The predicted condition is displayed alongside your submitted symptoms. Results are saved locally in your browser history.
+  </Step>
+  <Step title="Export or repeat">
+    Download a plain-text report of the result or replay a previous consultation from the history panel.
+  </Step>
+</Steps>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="XGBoost classifier" icon="brain">
+    A gradient-boosted decision-tree model trained on 18 medical conditions with optimised hyperparameters (150 estimators, learning rate 0.03).
+  </Card>
+  <Card title="TF-IDF vectorisation" icon="magnifying-glass">
+    Free-text symptoms are converted into numerical feature vectors using Term Frequency–Inverse Document Frequency, enabling flexible natural language input.
+  </Card>
+  <Card title="FastAPI backend" icon="server">
+    A lightweight Python API built with FastAPI and uvicorn, exposing two endpoints for health checks and symptom prediction.
+  </Card>
+  <Card title="React frontend" icon="desktop">
+    A single-page application built with React 18, TypeScript, and Tailwind CSS — featuring dark mode, live API status, and local history.
+  </Card>
+  <Card title="18 supported conditions" icon="stethoscope">
+    From Alzheimer's disease to Wilson's disease — the model covers a broad range of neurological, autoimmune, metabolic, and infectious conditions.
+  </Card>
+  <Card title="Export to text" icon="file-export">
+    Download a plain-text summary of any diagnosis result for record-keeping or follow-up with a healthcare provider.
+  </Card>
+</CardGroup>
+
+## Technology stack
+
+| Layer | Technology |
+|---|---|
+| ML model | XGBoost (XGBClassifier) |
+| Text vectorisation | scikit-learn TfidfVectorizer |
+| Label encoding | scikit-learn LabelEncoder |
+| Backend framework | FastAPI + uvicorn |
+| Data manipulation | pandas, numpy |
+| Frontend framework | React 18 + TypeScript |
+| Styling | Tailwind CSS |
+| Build tool | Vite |
+
+## Quick links
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get HealthIA running locally in under five minutes.
+  </Card>
+  <Card title="Architecture overview" icon="sitemap" href="/architecture/overview">
+    Understand how the backend, ML pipeline, and frontend fit together.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/overview">
+    Explore the two REST endpoints exposed by the FastAPI backend.
+  </Card>
+  <Card title="Supported conditions" icon="list" href="/conditions/overview">
+    See the full list of 18 medical conditions the model can predict.
+  </Card>
+</CardGroup>

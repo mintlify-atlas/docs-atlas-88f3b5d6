@@ -1,0 +1,97 @@
+---
+title: 'Running locally'
+description: 'Set up and run the full HealthIA stack on your local machine.'
+---
+
+This guide walks you through running both the FastAPI backend and the Vite frontend on your local machine.
+
+<Tip>Run the backend and frontend in two separate terminal windows so both processes stay active simultaneously.</Tip>
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **Python 3.10+** — required for the FastAPI backend and ML dependencies
+- **Node.js 18+** — required for the Vite frontend
+- **Git** — to clone the repository
+
+## Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/Rafael-Lee1/healthia-diagnostico-inteligente.git
+    cd healthia-diagnostico-inteligente
+    ```
+  </Step>
+
+  <Step title="Set up the backend">
+    Navigate to the `HEALTHIA/` directory, create a virtual environment, and install dependencies.
+
+    ```bash
+    cd HEALTHIA
+    python -m venv .venv
+    ```
+
+    Activate the virtual environment:
+
+    <CodeGroup>
+
+    ```bash macOS / Linux
+    source .venv/bin/activate
+    ```
+
+    ```bash Windows
+    .venv\Scripts\activate
+    ```
+
+    </CodeGroup>
+
+    Install the required Python packages:
+
+    ```bash
+    pip install -r ../requirements.txt
+    ```
+  </Step>
+
+  <Step title="Start the API server">
+    From the `HEALTHIA/` directory, start the FastAPI development server:
+
+    ```bash
+    uvicorn main:app --reload --port 8000
+    ```
+
+    To verify the backend is running, open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser. You should see:
+
+    ```json
+    {"Message": "Welcome to HealthIA API"}
+    ```
+  </Step>
+
+  <Step title="Set up the frontend">
+    Open a second terminal window and navigate to the `frontend/` directory from the project root:
+
+    ```bash
+    cd frontend
+    npm install
+    ```
+
+    Create a `.env` file in the `frontend/` directory:
+
+    ```bash frontend/.env
+    VITE_API_BASE_URL=http://127.0.0.1:8000
+    ```
+  </Step>
+
+  <Step title="Start the frontend dev server">
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:5173](http://localhost:5173) in your browser to access the HealthIA interface.
+  </Step>
+
+  <Step title="Verify everything works">
+    With both servers running, enter a set of symptoms into the UI and submit a prediction request. A valid diagnostic response from the model confirms the full stack is working correctly.
+  </Step>
+</Steps>

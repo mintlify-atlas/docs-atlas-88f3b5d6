@@ -1,0 +1,61 @@
+---
+title: 'Environment variables'
+description: 'Reference for all environment variables used by the HealthIA backend and frontend.'
+---
+
+HealthIA is configured through environment variables in both the backend (FastAPI) and the frontend (Vite). This page documents every supported variable.
+
+## Backend variables
+
+Set these variables in the environment where you run `uvicorn` (e.g., a `.env` file loaded by your process manager, a Railway service variable, or your shell).
+
+| Variable | Default | Description | Example |
+|---|---|---|---|
+| `FRONTEND_URL` | _(none)_ | A single additional CORS origin to allow | `https://healthia.example.com` |
+| `FRONTEND_URLS` | _(none)_ | Comma-separated list of additional CORS origins to allow | `https://app.example.com,https://staging.example.com` |
+| `ALLOW_ALL_ORIGINS` | `false` | Set to `"true"` to allow all origins (`*`). Overrides all other CORS settings. | `true` |
+
+<Warning>`ALLOW_ALL_ORIGINS=true` disables all CORS restrictions and allows any domain to call your API. Never use this setting in production.</Warning>
+
+### Default allowed origins
+
+Even without any environment variables set, the following origins are always permitted:
+
+- `http://127.0.0.1:5173`
+- `http://localhost:5173`
+- Any `https://*.up.railway.app` subdomain (matched via regex)
+
+### Backend `.env` example
+
+```bash backend .env
+# Allow a single production frontend
+FRONTEND_URL=https://healthia.example.com
+
+# Or allow multiple origins
+FRONTEND_URLS=https://healthia.example.com,https://staging.healthia.example.com
+
+# Development only — do not use in production
+# ALLOW_ALL_ORIGINS=true
+```
+
+## Frontend variables
+
+Create a `.env` file in the `frontend/` directory. Vite exposes variables prefixed with `VITE_` to the browser bundle at build time.
+
+| Variable | Default | Description | Example |
+|---|---|---|---|
+| `VITE_API_BASE_URL` | `http://127.0.0.1:8000` | Base URL of the FastAPI backend | `https://api.healthia.example.com` |
+
+### Frontend `.env` example
+
+```bash frontend/.env
+# Local development
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+```bash frontend/.env.production
+# Production deployment
+VITE_API_BASE_URL=https://api.healthia.example.com
+```
+
+<Note>Vite reads `.env`, `.env.local`, `.env.[mode]`, and `.env.[mode].local` files. See the [Vite documentation](https://vite.dev/guide/env-and-mode) for load order and precedence rules.</Note>

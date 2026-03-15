@@ -1,80 +1,172 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get HealthIA running locally and make your first diagnostic prediction in under five minutes.
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+Before you begin, make sure you have the following installed:
 
-### Step 1: Set up your local environment
+| Tool | Minimum version | Used for |
+|---|---|---|
+| Python | 3.10+ | FastAPI backend and ML model |
+| Node.js | 18+ | React frontend build tooling |
+| Git | any | Cloning the repository |
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Set up HealthIA
 
-### Step 2: Deploy your changes
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/Rafael-Lee1/healthia-diagnostico-inteligente.git
+    cd healthia-diagnostico-inteligente
+    ```
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Step title="Install backend dependencies">
+    Navigate to the `HEALTHIA/` directory and install the Python requirements.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    <CodeGroup>
+      ```bash With virtual environment (recommended)
+      python -m venv .venv
+      source .venv/bin/activate   # On Windows: .venv\Scripts\activate
+      pip install -r ../requirements.txt
+      ```
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+      ```bash Without virtual environment
+      pip install -r requirements.txt
+      ```
+    </CodeGroup>
 
-### Step 3: Go live
+    Key packages installed:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    | Package | Version | Purpose |
+    |---|---|---|
+    | fastapi | 0.131.0 | HTTP API framework |
+    | uvicorn | 0.41.0 | ASGI server |
+    | xgboost | 3.2.0 | ML classifier |
+    | scikit-learn | 1.7.1 | TF-IDF, LabelEncoder |
+    | pandas | 3.0.1 | Data handling |
+  </Step>
+
+  <Step title="Start the backend API">
+    From inside the `HEALTHIA/` directory:
+
+    ```bash
+    uvicorn main:app --reload --port 8000
+    ```
+
+    Verify it's running by opening [http://127.0.0.1:8000](http://127.0.0.1:8000) — you should see:
+
+    ```json
+    {"Message": "Welcome to HealthIA API"}
+    ```
+
+    <Tip>
+      Keep this terminal open. Open a second terminal window for the frontend setup.
+    </Tip>
+  </Step>
+
+  <Step title="Install frontend dependencies">
+    From the project root, navigate to the `frontend/` directory:
+
+    <CodeGroup>
+      ```bash npm
+      cd frontend
+      npm install
+      ```
+
+      ```bash yarn
+      cd frontend
+      yarn install
+      ```
+
+      ```bash pnpm
+      cd frontend
+      pnpm install
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Configure the frontend environment">
+    Create a `.env` file inside the `frontend/` directory:
+
+    ```bash frontend/.env
+    VITE_API_BASE_URL=http://127.0.0.1:8000
+    ```
+
+    <Note>
+      If you deploy the backend to a different host or port, update `VITE_API_BASE_URL` to match.
+    </Note>
+  </Step>
+
+  <Step title="Start the frontend dev server">
+    From the `frontend/` directory:
+
+    <CodeGroup>
+      ```bash npm
+      npm run dev
+      ```
+
+      ```bash yarn
+      yarn dev
+      ```
+
+      ```bash pnpm
+      pnpm dev
+      ```
+    </CodeGroup>
+
+    Open [http://localhost:5173](http://localhost:5173) in your browser. You should see the HealthIA interface with a green **API online** status badge in the header.
+  </Step>
+</Steps>
+
+## Make your first prediction
+
+### Using the UI
+
+1. In the symptom input field, type symptoms separated by commas — for example: `febre, cansaço, dor no corpo`
+2. You can also click on suggested symptom chips (febre, tremores, visão dupla, etc.) to add them quickly
+3. Add at least **2 symptoms** (maximum 8 per analysis)
+4. Click **Gerar diagnóstico**
+5. The predicted condition appears on the right side of the screen
+
+### Using curl
+
+You can also call the API directly:
+
+```bash
+curl "http://127.0.0.1:8000/predict/?sintomas=febre,cansa%C3%A7o,dor%20no%20corpo"
+```
+
+Expected response:
+
+```json
+{
+  "sintomas": ["febre", "cansaço", "dor no corpo"],
+  "diagnostico_previsto": ["doenca_lyme"]
+}
+```
+
+The `diagnostico_previsto` field contains the predicted condition label. See the [Supported Conditions](/conditions/overview) page for the full list of possible values and their English names.
+
+<Warning>
+  HealthIA provides educational predictions only. The results are **not** a substitute for professional medical diagnosis or advice. Always consult a qualified healthcare provider.
+</Warning>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Architecture overview" icon="sitemap" href="/architecture/overview">
+    Understand how the FastAPI backend, ML pipeline, and React frontend work together.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/overview">
+    Explore the two REST endpoints and their parameters in detail.
+  </Card>
+  <Card title="Training the model" icon="brain" href="/guides/training-the-model">
+    Learn how to retrain the XGBoost model with new data.
+  </Card>
+  <Card title="Supported conditions" icon="stethoscope" href="/conditions/overview">
+    Browse all 20 medical conditions HealthIA can predict.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

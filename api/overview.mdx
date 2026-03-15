@@ -1,0 +1,73 @@
+---
+title: 'API overview'
+description: 'Base URL, available endpoints, CORS policy, and error handling for the HealthIA API.'
+---
+
+The HealthIA API is a REST API that accepts symptom input and returns a predicted medical condition. All responses are JSON.
+
+## Base URL
+
+By default the API runs on:
+
+```
+http://127.0.0.1:8000
+```
+
+The frontend reads this from the `VITE_API_BASE_URL` environment variable. If the variable is not set, it falls back to `http://127.0.0.1:8000`. Trailing slashes are stripped automatically.
+
+## Authentication
+
+No authentication is required. All endpoints are publicly accessible.
+
+## CORS policy
+
+The following origins are allowed by default:
+
+- `http://127.0.0.1:5173`
+- `http://localhost:5173`
+- All `https://*.up.railway.app` subdomains
+
+Additional origins can be added at runtime via environment variables:
+
+| Variable | Description |
+|---|---|
+| `FRONTEND_URL` | A single additional allowed origin |
+| `FRONTEND_URLS` | A comma-separated list of additional allowed origins |
+| `ALLOW_ALL_ORIGINS=true` | Disables origin restrictions entirely |
+
+## Available endpoints
+
+<Columns cols={2}>
+  <Card title="GET /" icon="circle-check">
+    Health check. Returns a welcome message to confirm the API is running.
+  </Card>
+  <Card title="GET /predict/" icon="stethoscope" href="/api/predict">
+    Accepts a comma-separated symptom string and returns a predicted condition label.
+  </Card>
+</Columns>
+
+## Error handling
+
+The API returns standard HTTP status codes. The frontend fetch wrapper treats any non-2xx response as an error and throws:
+
+```
+Erro na API (<status code>)
+```
+
+No structured error body is defined beyond the HTTP status code.
+
+## Quick start
+
+Verify the API is running:
+
+```bash
+curl http://127.0.0.1:8000/
+```
+
+Expected response:
+
+```json
+{
+  "Message": "Welcome to HealthIA API"
+}
+```

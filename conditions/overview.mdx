@@ -1,0 +1,39 @@
+---
+title: 'Supported conditions'
+description: 'The 20 medical conditions that HealthIA can predict from a set of input symptoms.'
+---
+
+HealthIA's diagnostic model is trained to identify 20 distinct medical conditions from symptom input. Each prediction returns one of the condition labels listed below. Use this reference to interpret API responses and present results to end users.
+
+<Warning>
+  HealthIA is an educational tool only. Predictions are not a substitute for professional medical evaluation, diagnosis, or treatment. Always consult a qualified healthcare provider.
+</Warning>
+
+## Condition reference
+
+| Condition label | Condition name | Key distinguishing symptoms |
+|---|---|---|
+| `anemia_falciforme` | Sickle Cell Anemia | Extreme fatigue, severe joint pain, pain crises |
+| `artrite_reumatoide` | Rheumatoid Arthritis | Chronic joint pain, swollen joints, morning stiffness |
+| `diabetes_tipo1` | Type 1 Diabetes | Excessive thirst, frequent urination, rapid weight loss |
+| `doenca_alzheimer` | Alzheimer's Disease | Constant forgetfulness, confusion, disorientation |
+| `doenca_crohn` | Crohn's Disease | Intense abdominal cramps, bloody diarrhea, fatigue |
+| `doenca_lyme` | Lyme Disease | Low fever, constant fatigue, body pain, skin rashes |
+| `doenca_parkinson` | Parkinson's Disease | Hand tremors, muscle rigidity, slow movements |
+| `doenca_wilson` | Wilson's Disease | Fatigue, abdominal pain, tremors, hepatopathy |
+| `esclerose_lateral` | Lateral Sclerosis (ALS) | Arm weakness, speech difficulty, muscle atrophy |
+| `esclerose_multipla` | Multiple Sclerosis | Persistent fatigue, muscle weakness, double vision, tingling |
+| `febre_maculosa` | Rocky Mountain Spotted Fever | High fever, muscle pain, severe fatigue, skin rash |
+| `fibromialgia` | Fibromyalgia | Full-body pain, constant fatigue, sleep difficulty |
+| `hipertireoidismo` | Hyperthyroidism | Rapid weight loss, tachycardia, constant anxiety |
+| `hipotireoidismo` | Hypothyroidism | Severe fatigue, weight gain, excessive cold sensitivity |
+| `lupus` | Lupus | Joint pain, chronic fatigue, sun sensitivity, facial rash |
+| `miastenia_gravis` | Myasthenia Gravis | Muscle weakness, diplopia, swallowing difficulty |
+| `porfiria` | Porphyria | Intense abdominal pain, nausea, vomiting, mental confusion |
+| `sarcoidose` | Sarcoidosis | Severe fatigue, shortness of breath, dry cough, fever |
+| `sindrome_fadiga_cronica` | Chronic Fatigue Syndrome | Severe chronic fatigue, body pain, brain fog |
+| `sindrome_sjogren` | Sjögren's Syndrome | Dry mouth, dry eyes, fatigue, chronic joint pain |
+
+<Note>
+  Condition labels returned by the API use underscores and are written in Portuguese (e.g. `doenca_lyme`, `sindrome_sjogren`). These are the raw internal identifiers used by the model. To display a human-readable label in your UI, replace underscores with spaces and apply title casing — the frontend reference implementation uses a `formatDiagnosisLabel` utility for this purpose.
+</Note>

@@ -1,0 +1,110 @@
+---
+title: 'Training the model'
+description: 'Retrain the HealthIA XGBoost model and save the updated artifacts.'
+---
+
+HealthIA uses an XGBoost classifier trained on symptom strings. This guide explains when and how to retrain the model and save the resulting artifacts.
+
+## When to retrain
+
+Retrain the model when you:
+
+- Add new medical conditions or symptom entries to `datasetService.py`
+- Tune the XGBoost hyperparameters to improve accuracy
+- Replace or expand the underlying dataset
+
+## How training works
+
+The pipeline consists of three stages:
+
+1. **Vectorization** — Symptom strings are transformed into numerical features using TF-IDF (`vetorizacaoService.py`).
+2. **Train/test split** — The dataset is split 70% training / 30% test.
+3. **XGBoost training** — An XGBoost classifier is fit on the training split using the parameters below.
+
+### XGBoost hyperparameters
+
+| Parameter | Value | Description |
+|---|---|---|
+| `n_estimators` | `150` | Number of boosting rounds |
+| `learning_rate` | `0.03` | Step size shrinkage to prevent overfitting |
+| `max_depth` | `3` | Maximum depth of each tree |
+| `min_child_weight` | `1` | Minimum sum of instance weight in a child |
+| `random_state` | `42` | Seed for reproducibility |
+
+## Running training
+
+Navigate to the `HEALTHIA/` directory and run the training script:
+
+```bash
+cd HEALTHIA
+python leitura.py
+```
+
+The `__main__` block in `leitura.py` calls `salvar_modelo_healthIA()`, which trains and saves the XGBoost model.
+
+```python leitura.py
+if __name__ == "__main__":
+    salvar_modelo_healthIA()
+```
+
+To also save the vectorizer and label encoder, call the additional functions explicitly or invoke them directly:
+
+```python
+from services.salvarmodelService import salvar_vetorizador, salvar_encoderY, salvar_modelo
+
+salvar_modelo()       # saves model/modelo_HealthIA.json
+salvar_vetorizador()  # saves model/vetorizador_HealthIA.pkl
+salvar_encoderY()     # saves model/encoderY_HealthIA.pkl
+```
+
+## Saved artifacts
+
+After a successful training run, three files are written under `HEALTHIA/model/`:
+
+| File | Description |
+|---|---|
+| `modelo_HealthIA.json` | Trained XGBoost model |
+| `vetorizador_HealthIA.pkl` | Fitted TF-IDF vectorizer |
+| `encoderY_HealthIA.pkl` | Fitted LabelEncoder for diagnosis labels |
+
+<Note>The `model/` directory is created automatically if it does not exist.</Note>
+
+## Checking accuracy
+
+To print the model's accuracy on the test split without saving artifacts, call `acuracia_modelo()` from `treinamentoService.py`:
+
+```python
+from services.treinamentoService import acuracia_modelo
+
+acuracia = acuracia_modelo()
+print(f"Acurácia do modelo: {acuracia:.2f}%")
+```
+
+Or use the convenience wrapper in `leitura.py`:
+
+```python leitura.py
+def acuracia_modelo_print():
+    acuracia = acuracia_modelo()
+    print(f"Acurácia do modelo: {acuracia:.2f}%")
+```
+
+## Adding new training data
+
+Training data is defined in `datasetService.py` as a list of `(symptom_string, condition_label)` tuples. Each entry pairs a plain-text description of symptoms with the corresponding diagnosis label.
+
+To add a new condition:
+
+1. Open `services/datasetService.py`.
+2. Append new `(symptom_string, condition_label)` tuples to the dataset list. For example:
+
+   ```python
+   # Existing entry format:
+   ("fever headache stiff neck sensitivity to light", "meningitis"),
+
+   # New entry:
+   ("chest pain shortness of breath left arm pain", "myocardial infarction"),
+   ```
+
+3. Save the file and re-run `python leitura.py` to retrain with the updated data.
+
+<Warning>After modifying the dataset, always retrain **and** save all three artifacts (`salvar_modelo`, `salvar_vetorizador`, `salvar_encoderY`). Mismatched artifacts will cause prediction errors at runtime.</Warning>
