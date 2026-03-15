@@ -1,0 +1,57 @@
+{
+  "projectType": "saas",
+  "projectName": "HealthIA",
+  "projectDescription": "An AI-powered medical diagnostic assistant that predicts likely diagnoses from patient-reported symptoms using an XGBoost machine learning model, exposed via a FastAPI backend and a React/TypeScript frontend.",
+  "theme": "almond",
+  "primaryColor": "#0ea5e9",
+  "lightColor": "#e0f2fe",
+  "darkColor": "#0c4a6e",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/ml-pipeline", "architecture/frontend"]
+          },
+          {
+            "group": "Guides",
+            "pages": ["guides/running-locally", "guides/training-the-model", "guides/environment-variables"]
+          },
+          {
+            "group": "Supported Conditions",
+            "pages": ["conditions/overview"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": ["api/overview", "api/predict"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Symptom-based diagnostic prediction using XGBoost classifier",
+    "TF-IDF text vectorization of free-text symptom descriptions",
+    "18 supported medical conditions in the training dataset",
+    "FastAPI REST backend with CORS support for flexible deployment",
+    "React + TypeScript frontend with dark mode and diagnosis history",
+    "Local diagnosis history with export-to-text functionality",
+    "Real-time API status indicator in the UI",
+    "Configurable allowed origins via environment variables"
+  ],
+  "publicApiSurface": [
+    "GET / — Welcome message and API health check",
+    "GET /predict/?sintomas={comma_separated_symptoms} — Predict diagnosis from symptoms"
+  ]
+}
